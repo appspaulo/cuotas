@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cuotas PM">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#d9291c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  html { -webkit-text-size-adjust: 100%; }
+</style>
+<title>Cuotas PM</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+  /* Layout: una columna angosta de herramienta. Pestañas arriba, entradas en una tarjeta, resultado siempre visible debajo de las entradas. */
+  :root {
+    --bg: #f4f5f2;
+    --surface: #ffffff;
+    --fg: #1b2420;
+    --muted: #5d6a63;
+    --line: #dde2dc;
+    --accent: #1d6b52;
+    --accent-fg: #ffffff;
+    --accent-soft: #e0efe8;
+    --warn: #a3411f;
+    --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101512; --surface: #18201b; --fg: #e6ece8; --muted: #9aa8a0;
+      --line: #2b3830; --accent: #6fcfa8; --accent-fg: #0c1a13; --accent-soft: #1d3329; --warn: #f0997a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101512; --surface: #18201b; --fg: #e6ece8; --muted: #9aa8a0;
+    --line: #2b3830; --accent: #6fcfa8; --accent-fg: #0c1a13; --accent-soft: #1d3329; --warn: #f0997a;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+    padding-block: 24px 40px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  main { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+  h1 { font-family: var(--font-display); font-size: 26px; line-height: 1.15; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+  .sub { margin: 6px 0 0; color: var(--muted); }
+
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--line); border-radius: 10px; }
+  .seg button {
+    font: inherit; font-weight: 500; color: var(--muted); background: transparent; border: 0;
+    padding: 10px 8px; border-radius: 7px; cursor: pointer; min-width: 0;
+  }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .label-small { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 18px; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field label, .field .lbl { font-weight: 500; }
+  .field .hint { font-size: 13px; color: var(--muted); }
+  .inp { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); min-width: 0; }
+  .inp:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .inp span { padding: 0 4px 0 14px; color: var(--muted); font-weight: 600; font-size: 22px; font-family: var(--font-display); }
+  .inp input {
+    flex: 1; min-width: 0; width: 100%; font-family: var(--font-display); font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums;
+    color: var(--fg); background: transparent; border: 0; padding: 12px 14px 12px 8px; outline: none;
+  }
+  .inp input.nopre { padding-left: 14px; }
+  .inp span.suf { padding: 0 14px 0 0; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 420px) { .row2 { grid-template-columns: 1fr; } }
+
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .gear {
+    flex: none; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer;
+    color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 10px;
+  }
+  .gear[aria-expanded="true"] { color: var(--accent-fg); background: var(--accent); border-color: var(--accent); }
+  .settings { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px 18px; }
+  .settings .lbl { font-weight: 500; }
+
+  .fold { display: flex; align-items: center; gap: 10px; width: 100%; padding: 0; background: none; border: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+  .fold .lbl { font-weight: 500; }
+  .fold .sum { margin-left: auto; min-width: 0; text-align: right; color: var(--accent); font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .fold::after {
+    content: ""; flex: none; width: 8px; height: 8px; margin: 0 4px 3px 2px;
+    border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s;
+  }
+  .fold[aria-expanded="true"]::after { transform: rotate(-135deg); margin-bottom: -3px; }
+  .fold[aria-expanded="true"] .sum { display: none; }
+  .foldbody { display: flex; flex-direction: column; gap: 8px; }
+  .chips { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  .chips button {
+    font: inherit; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums;
+    padding: 12px 0; border-radius: 8px; cursor: pointer; min-width: 0;
+    color: var(--fg); background: var(--bg); border: 1px solid var(--line);
+  }
+  .chips button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .chips button:disabled { opacity: .35; cursor: default; }
+
+  .results { display: flex; flex-direction: column; }
+  .res-item { border-top: 1px solid var(--line); }
+  .res-row {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 0; background: transparent; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer;
+  }
+  .res-row .n { font-weight: 600; font-size: 17px; white-space: nowrap; }
+  .res-row .n small { font-weight: 400; color: var(--muted); font-size: 14px; }
+  .res-row .cuota { margin-left: auto; font-family: var(--font-display); font-weight: 700; font-size: 28px; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .res-row::after {
+    content: ""; flex: none; width: 8px; height: 8px; margin: 0 4px 3px 2px;
+    border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .15s;
+  }
+  .res-row[aria-expanded="true"]::after { transform: rotate(-135deg); margin-bottom: -3px; }
+  .det { margin: 0 0 12px; padding: 4px 14px; background: var(--bg); border-radius: 10px; }
+  .det div { border-top: 1px solid var(--line); }
+  .det div:first-child { border-top: 0; }
+  .empty { color: var(--muted); margin: 0; }
+  .sharebtn {
+    font: inherit; font-size: 18px; font-weight: 600; width: 100%; min-height: 54px; cursor: pointer;
+    color: var(--accent-fg); background: var(--accent); border: 0; border-radius: 12px;
+  }
+  .sharebtn:disabled { opacity: .35; cursor: default; }
+  .overlay {
+    position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.72); overflow-y: auto;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    padding: max(20px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(20px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  }
+  .overlay img { width: 100%; max-width: 420px; height: auto; border-radius: 8px; background: #fff; }
+  .overlay .help { color: #fff; margin: 0; text-align: center; max-width: 420px; }
+  .overlay .acts { display: flex; gap: 10px; width: 100%; max-width: 420px; }
+  .overlay .acts a, .overlay .acts button {
+    flex: 1; text-align: center; text-decoration: none; font: inherit; font-weight: 600; padding: 13px 8px; border-radius: 10px; cursor: pointer; border: 0;
+    background: #fff; color: #1b2420;
+  }
+  .overlay .acts a.main { background: var(--accent); color: var(--accent-fg); }
+
+  .answer { background: var(--accent-soft); border-radius: 10px; padding: 16px; }
+  .answer .big { font-family: var(--font-display); font-size: 52px; font-weight: 700; line-height: 1.05; color: var(--accent); font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .answer .big small { font-size: 20px; font-weight: 600; color: var(--muted); }
+  .answer .big.off { color: var(--muted); }
+  dl { margin: 0; display: grid; }
+  dl div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  dt { color: var(--muted); } dd { margin: 0; font-weight: 600; text-align: right; }
+
+  .msg { color: var(--warn); font-weight: 500; margin: 0; }
+  .note { font-size: 13px; color: var(--muted); margin: 0; }
+  [hidden] { display: none !important; }
+</style>
+
+</head>
+<body>
+<main>
+  <header>
+    <div class="head">
+      <h1>Calculadora de cuotas</h1>
+      <button type="button" class="gear" id="gear-btn" aria-label="Configuración" aria-expanded="false" aria-controls="settings">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+    <div class="settings" id="settings" hidden>
+      <label class="lbl" for="c-tasa">Interés mensual</label>
+      <div class="inp"><input id="c-tasa" class="nopre" type="text" inputmode="decimal" value="4" autocomplete="off" data-dec="3"><span class="suf">%</span></div>
+    </div>
+  </header>
+
+  <section aria-label="Tipo de cálculo">
+    <div class="seg" id="modo">
+      <button type="button" data-t="cuota" aria-pressed="true">Valor de la cuota</button>
+      <button type="button" data-t="tasa" aria-pressed="false">Interés mensual</button>
+    </div>
+  </section>
+
+  <section class="card" id="panel-cuota">
+    <div class="field">
+      <label for="c-capital">Capital</label>
+      <div class="inp"><span>$</span><input id="c-capital" type="text" inputmode="decimal" value="100.000" autocomplete="off" data-dec="2"></div>
+    </div>
+    <div class="field">
+      <button type="button" class="fold" id="chips-btn" aria-expanded="true" aria-controls="chips-body"><span class="lbl" id="chips-lbl">Cantidad de cuotas</span><span class="sum" id="chips-sum"></span></button>
+      <div class="foldbody" id="chips-body">
+        <span class="hint">Tocá las que quieras comparar</span>
+        <div class="chips" id="chips" role="group" aria-labelledby="chips-lbl"></div>
+      </div>
+    </div>
+    <p class="msg" id="c-msg" role="alert" hidden></p>
+    <div class="results" id="c-res" aria-live="polite"></div>
+    <button type="button" class="sharebtn" id="share-btn" disabled>Compartir</button>
+  </section>
+
+  <section class="card" id="panel-tasa" hidden>
+    <div class="field">
+      <label for="t-capital">Capital</label>
+      <div class="inp"><span>$</span><input id="t-capital" type="text" inputmode="decimal" value="100.000" autocomplete="off" data-dec="2"></div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label for="t-cuotas">Cantidad de cuotas</label>
+        <div class="inp"><input id="t-cuotas" class="nopre" type="text" inputmode="numeric" value="6" autocomplete="off" data-dec="0"></div>
+      </div>
+      <div class="field">
+        <label for="t-valor">Monto de cada cuota</label>
+        <div class="inp"><span>$</span><input id="t-valor" type="text" inputmode="decimal" value="20.666,67" autocomplete="off" data-dec="2"></div>
+      </div>
+    </div>
+    <p class="msg" id="t-msg" role="alert" hidden></p>
+    <div class="answer" aria-live="polite">
+      <p class="label-small">Interés mensual</p>
+      <div class="big" id="t-big">—</div>
+    </div>
+    <dl id="t-det" hidden>
+      <div><dt>Total a cobrar</dt><dd id="t-total"></dd></div>
+      <div><dt>Interés total</dt><dd id="t-int"></dd></div>
+      <div><dt>Interés total sobre el capital</dt><dd id="t-intpct"></dd></div>
+    </dl>
+  </section>
+</main>
+
+<div class="overlay" id="preview" hidden role="dialog" aria-label="Imagen para compartir">
+  <img alt="Cuotas para compartir">
+  <p class="help">Mantené apretada la imagen para compartirla o guardarla.</p>
+  <div class="acts">
+    <a class="main" href="#" download="cuotas-pm-automotores.png">Descargar</a>
+    <button type="button" id="preview-close">Cerrar</button>
+  </div>
+</div>
+
+<script>
+// <calc>
+function parseNum(s) {
+  s = String(s == null ? "" : s).trim().replace(/\s/g, "").replace(/^\$/, "");
+  if (!s) return NaN;
+  if (s.indexOf(",") !== -1) s = s.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  return /^-?\d*\.?\d+$/.test(s) ? parseFloat(s) : NaN;
+}
+// Cuota fija, interés siempre sobre el capital inicial.
+function cuotaValor(P, i, n) { return P * (1 + i * n) / n; }
+// Paso de redondeo según el monto de la cuota: alrededor del 1% (1.000.000 → 10.000, 500.000 → 5.000, 100.000 → 1.000).
+// Pasos posibles: 1, 2 y 5 por una potencia de 10 (1.000, 2.000, 5.000, 10.000, 20.000...), el más cercano a ese 1%. Nunca menos de 10.
+function paso(c) {
+  var t = c / 100;
+  if (t < 10) return 10;
+  var p = Math.pow(10, Math.floor(Math.log10(t) + 1e-9));
+  var cand = [p, 2 * p, 5 * p, 10 * p], best = cand[0], d = Math.abs(cand[0] - t);
+  for (var k = 1; k < cand.length; k++) {
+    var dk = Math.abs(cand[k] - t);
+    if (dk <= d + 1e-9) { best = cand[k]; d = dk; }
+  }
+  return best;
+}
+// La cuota que se cobra: se redondea hacia arriba según ese paso.
+function redondear(c) { var s = paso(c); return Math.ceil(c / s - 1e-9) * s; }
+// Interés mensual (fracción, 0.04 = 4%) a partir de capital, cuotas y monto de cuota.
+function tasaDesdeCuota(P, c, n) { return (c * n / P - 1) / n; }
+// Formatea mientras se escribe: puntos de miles, coma decimal.
+function fmtLive(raw, maxDec) {
+  var s = String(raw).replace(/[^\d,]/g, "");
+  if (maxDec === 0) s = s.replace(/,/g, "");
+  var ci = s.indexOf(","), intp, dec = null;
+  if (ci === -1) intp = s;
+  else { intp = s.slice(0, ci); dec = s.slice(ci + 1).replace(/,/g, "").slice(0, maxDec); }
+  intp = intp.replace(/^0+(?=\d)/, "");
+  if (dec !== null && intp === "") intp = "0";
+  intp = intp.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return dec === null ? intp : intp + "," + dec;
+}
+// </calc>
+
+var selected = { 3: 1, 6: 1, 12: 1 };
+var openRows = {};
+var mode = "cuota";
+var money = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+var moneyInt = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+function pct(x) { return x.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%"; }
+function pctShort(x) { return x.toLocaleString("es-AR", { maximumFractionDigits: 3 }) + "%"; }
+function $(id) { return document.getElementById(id); }
+function showMsg(el, text) { el.textContent = text; el.hidden = !text; }
+
+function buildChips() {
+  var box = $("chips"), html = "";
+  for (var n = 1; n <= 24; n++) {
+    html += '<button type="button" data-n="' + n + '"' + (n < 2 ? " disabled" : ' aria-pressed="' + (selected[n] ? "true" : "false") + '"') + ">" + n + "</button>";
+  }
+  box.innerHTML = html;
+  box.addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b || b.disabled) return;
+    var n = b.getAttribute("data-n");
+    if (selected[n]) delete selected[n]; else selected[n] = 1;
+    b.setAttribute("aria-pressed", String(!!selected[n]));
+    calcCuota();
+    updateSum();
+  });
+}
+
+// ---- Memoria del teléfono: guarda el interés, el último cálculo y la pestaña, y los recupera al abrir la app.
+var STORE = "cuotas-pm-estado";
+var IDS = ["c-capital", "c-tasa", "t-capital", "t-cuotas", "t-valor"];
+function save() {
+  try {
+    var o = { mode: mode, selected: Object.keys(selected).map(Number), v: {} };
+    IDS.forEach(function (id) { o.v[id] = $(id).value; });
+    localStorage.setItem(STORE, JSON.stringify(o));
+  } catch (err) {}
+}
+function load() {
+  try {
+    var o = JSON.parse(localStorage.getItem(STORE) || "null"); if (!o) return;
+    IDS.forEach(function (id) { if (typeof o.v[id] === "string") $(id).value = o.v[id]; });
+    if (Array.isArray(o.selected)) {
+      selected = {};
+      o.selected.forEach(function (n) { if (n >= 2 && n <= 24) selected[n] = 1; });
+    }
+    if (o.mode === "cuota" || o.mode === "tasa") {
+      mode = o.mode;
+      Array.prototype.forEach.call($("modo").children, function (x) { x.setAttribute("aria-pressed", String(x.getAttribute("data-t") === mode)); });
+    }
+  } catch (err) {}
+}
+
+function calcCuota() {
+  save();
+  var P = parseNum($("c-capital").value), i = parseNum($("c-tasa").value) / 100;
+  var ns = Object.keys(selected).map(Number).sort(function (a, b) { return a - b; });
+  var msg = $("c-msg"), res = $("c-res");
+  res.innerHTML = "";
+  lastCalc = null; setShare();
+  if (!(P > 0)) return showMsg(msg, "Ingresá el capital.");
+  if (!(i >= 0)) return showMsg(msg, "Ingresá el interés mensual en la configuración (la ruedita).");
+  showMsg(msg, "");
+  if (!ns.length) { res.innerHTML = '<p class="empty">Elegí una o más cantidades de cuotas.</p>'; return; }
+  lastCalc = { P: P, items: ns.map(function (n) { return { n: n, c: redondear(cuotaValor(P, i, n)) }; }) };
+  setShare();
+  res.innerHTML = ns.map(function (n) {
+    var exacta = cuotaValor(P, i, n), c = redondear(exacta), total = c * n, open = !!openRows[n], real = (total / P - 1) / n;
+    return '<div class="res-item" data-n="' + n + '">' +
+      '<button type="button" class="res-row" aria-expanded="' + open + '"><span class="n">' + n + ' <small>cuotas de</small></span><span class="cuota">' + moneyInt.format(c) + "</span></button>" +
+      '<dl class="det"' + (open ? "" : " hidden") + ">" +
+        "<div><dt>Capital</dt><dd>" + money.format(P) + "</dd></div>" +
+        "<div><dt>Interés mensual</dt><dd>" + pctShort(i * 100) + "</dd></div>" +
+        "<div><dt>Cuota sin redondear</dt><dd>" + money.format(exacta) + "</dd></div>" +
+        "<div><dt>Interés mensual con redondeo</dt><dd>" + pctShort(real * 100) + "</dd></div>" +
+        "<div><dt>Interés total</dt><dd>" + money.format(total - P) + "</dd></div>" +
+        "<div><dt>Interés sobre el capital</dt><dd>" + pct((total / P - 1) * 100) + "</dd></div>" +
+        "<div><dt>Total a cobrar</dt><dd>" + moneyInt.format(total) + "</dd></div>" +
+      "</dl></div>";
+  }).join("");
+}
+
+$("c-res").addEventListener("click", function (e) {
+  var b = e.target.closest(".res-row"); if (!b) return;
+  var item = b.parentNode, n = item.getAttribute("data-n");
+  var open = b.getAttribute("aria-expanded") !== "true";
+  b.setAttribute("aria-expanded", String(open));
+  item.querySelector(".det").hidden = !open;
+  if (open) openRows[n] = 1; else delete openRows[n];
+});
+
+function calcTasa() {
+  save();
+  var P = parseNum($("t-capital").value), n = parseInt(String($("t-cuotas").value).replace(/\./g, ""), 10), c = parseNum($("t-valor").value);
+  var msg = $("t-msg"), big = $("t-big"), det = $("t-det");
+  det.hidden = true; big.className = "big off"; big.textContent = "—";
+  if (!(P > 0)) return showMsg(msg, "Ingresá el capital.");
+  if (!(n >= 1)) return showMsg(msg, "Ingresá la cantidad de cuotas.");
+  if (!(c > 0)) return showMsg(msg, "Ingresá el monto de cada cuota.");
+  var i = tasaDesdeCuota(P, c, n);
+  if (i < 0) return showMsg(msg, "Con esos valores el total de las cuotas es menor que el capital, así que no hay interés.");
+  showMsg(msg, "");
+  var total = c * n;
+  big.className = "big";
+  big.innerHTML = pct(i * 100).replace("%", "") + " <small>% por mes</small>";
+  $("t-total").textContent = money.format(total);
+  $("t-int").textContent = money.format(total - P);
+  $("t-intpct").textContent = pct((total / P - 1) * 100);
+  det.hidden = false;
+}
+
+function refresh() {
+  $("panel-cuota").hidden = mode !== "cuota";
+  $("panel-tasa").hidden = mode !== "tasa";
+}
+
+$("modo").addEventListener("click", function (e) {
+  var b = e.target.closest("button"); if (!b) return;
+  mode = b.getAttribute("data-t");
+  Array.prototype.forEach.call($("modo").children, function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+  refresh();
+  save();
+});
+
+// Separador de miles en vivo, conservando la posición del cursor.
+function wireNumber(id, onChange) {
+  var el = $(id), dec = parseInt(el.getAttribute("data-dec"), 10);
+  el.addEventListener("beforeinput", function (e) {
+    if (e.data === "." && e.inputType === "insertText") {
+      e.preventDefault();
+      el.setRangeText(",", el.selectionStart, el.selectionEnd, "end");
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  });
+  el.addEventListener("input", function () {
+    var pos = el.selectionStart == null ? el.value.length : el.selectionStart;
+    var sig = (el.value.slice(0, pos).match(/[\d,]/g) || []).length;
+    var f = fmtLive(el.value, dec);
+    el.value = f;
+    var k = 0, np = 0;
+    while (np < f.length && k < sig) { if (/[\d,]/.test(f.charAt(np))) k++; np++; }
+    try { el.setSelectionRange(np, np); } catch (err) {}
+    onChange();
+  });
+}
+wireNumber("c-capital", calcCuota);
+wireNumber("c-tasa", calcCuota);
+wireNumber("t-capital", calcTasa);
+wireNumber("t-cuotas", calcTasa);
+wireNumber("t-valor", calcTasa);
+
+// Al entrar a un campo se selecciona todo, para reemplazar el monto escribiendo directo.
+Array.prototype.forEach.call(document.querySelectorAll("input[data-dec]"), function (el) {
+  var fresh = false;
+  el.addEventListener("focus", function () {
+    fresh = true;
+    setTimeout(function () { try { el.setSelectionRange(0, el.value.length); } catch (err) {} }, 0);
+    setTimeout(function () { fresh = false; }, 400);
+  });
+  el.addEventListener("mouseup", function (e) { if (fresh) { e.preventDefault(); fresh = false; } });
+});
+
+// Cantidad de cuotas: se pliega desde el título y, plegado, muestra las elegidas.
+function updateSum() {
+  var closed = $("chips-btn").getAttribute("aria-expanded") !== "true";
+  var ns = Object.keys(selected).map(Number).sort(function (a, b) { return a - b; });
+  $("chips-sum").textContent = closed ? (ns.length ? ns.join(", ") : "ninguna") : "";
+}
+$("chips-btn").addEventListener("click", function () {
+  var open = $("chips-btn").getAttribute("aria-expanded") !== "true";
+  $("chips-btn").setAttribute("aria-expanded", String(open));
+  $("chips-body").hidden = !open;
+  updateSum();
+});
+
+// Configuración: la ruedita abre y cierra el menú con el interés mensual.
+function setSettings(open) {
+  $("settings").hidden = !open;
+  $("gear-btn").setAttribute("aria-expanded", String(open));
+  if (open) $("c-tasa").focus();
+  else if (document.activeElement === $("c-tasa")) $("c-tasa").blur();
+}
+$("gear-btn").addEventListener("click", function () { setSettings($("settings").hidden); });
+$("c-tasa").addEventListener("keydown", function (e) { if (e.key === "Escape" || e.key === "Enter") setSettings(false); });
+
+// ---- Compartir: arma una imagen para el cliente (sin el interés) y abre el menú de compartir (WhatsApp).
+var lastCalc = null;
+var logoImg = new Image();
+var logoReady = new Promise(function (ok) { logoImg.onload = function () { ok(true); }; logoImg.onerror = function () { ok(false); }; });
+logoImg.src = "logo.png";
+
+var prebuildTimer = null;
+function setShare() {
+  $("share-btn").disabled = !lastCalc;
+  // La imagen se prepara de antemano para que el menú de compartir abra apenas se toca el botón (el iPhone lo exige).
+  clearTimeout(prebuildTimer);
+  if (lastCalc) prebuildTimer = setTimeout(function () { buildImage().catch(function () {}); }, 300);
+}
+
+function rrect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+function drawCard(data, hasLogo) {
+  var W = 1080, ROW = 118, TOP = 70, items = data.items;
+  var logoW = 780, logoH = hasLogo ? Math.round(logoImg.height * logoW / logoImg.width) : 0;
+  var yHead = TOP + logoH + 50, yRows = yHead + 330, H = yRows + items.length * ROW + 120;
+  var cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  var ctx = cv.getContext("2d");
+  var RED = "#d9291c", INK = "#141414", GREY = "#6b6b6b", LINE = "#e3e3e3";
+  var DISP = "'Space Grotesk', 'Segoe UI', system-ui, sans-serif", BODY = "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif";
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = RED; ctx.fillRect(0, 0, W, 16);
+  if (hasLogo) ctx.drawImage(logoImg, (W - logoW) / 2, TOP, logoW, logoH);
+  ctx.textBaseline = "alphabetic"; ctx.textAlign = "center";
+  ctx.fillStyle = GREY; ctx.font = "500 34px " + BODY;
+  ctx.fillText(new Date().toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" }), W / 2, yHead + 30);
+  ctx.fillStyle = GREY; ctx.font = "600 30px " + BODY;
+  ctx.fillText("MONTO A FINANCIAR", W / 2, yHead + 130);
+  ctx.fillStyle = INK; ctx.font = "700 108px " + DISP;
+  ctx.fillText(moneyInt.format(data.P), W / 2, yHead + 245);
+  ctx.fillStyle = LINE; ctx.fillRect(80, yRows - 36, W - 160, 3);
+  ctx.textAlign = "left";
+  items.forEach(function (it, k) {
+    var y = yRows + k * ROW;
+    if (k % 2 === 0) { ctx.fillStyle = "#f6f6f6"; rrect(ctx, 60, y, W - 120, ROW - 14, 18); ctx.fill(); }
+    ctx.fillStyle = INK; ctx.font = "700 54px " + DISP;
+    var ns = it.n + " cuotas de";
+    ctx.fillText(ns, 100, y + 70);
+    ctx.textAlign = "right"; ctx.fillStyle = RED; ctx.font = "700 62px " + DISP;
+    ctx.fillText(moneyInt.format(it.c), W - 100, y + 72);
+    ctx.textAlign = "left";
+  });
+  ctx.fillStyle = RED; ctx.fillRect(0, H - 16, W, 16);
+  return cv;
+}
+
+function fontsReady() {
+  if (!document.fonts || !document.fonts.load) return Promise.resolve();
+  return Promise.all([document.fonts.load("700 60px 'Space Grotesk'"), document.fonts.load("500 30px 'Inter'")]).catch(function () {});
+}
+
+var shareCache = { key: "", blob: null, url: "" };
+function buildImage() {
+  var data = lastCalc; if (!data) return Promise.reject(new Error("sin datos"));
+  var key = JSON.stringify(data);
+  if (shareCache.key === key && shareCache.blob) return Promise.resolve(shareCache);
+  return Promise.all([logoReady, fontsReady()]).then(function (r) {
+    var cv = drawCard(data, r[0]);
+    return new Promise(function (ok, fail) {
+      cv.toBlob(function (b) {
+        if (!b) return fail(new Error("no se pudo crear la imagen"));
+        if (shareCache.url) URL.revokeObjectURL(shareCache.url);
+        shareCache = { key: key, blob: b, url: URL.createObjectURL(b) };
+        ok(shareCache);
+      }, "image/png");
+    });
+  });
+}
+
+function showPreview(c) {
+  var ov = $("preview");
+  ov.querySelector("img").src = c.url;
+  ov.querySelector("a.main").href = c.url;
+  ov.hidden = false;
+}
+
+$("share-btn").addEventListener("click", function () {
+  var btn = $("share-btn"); btn.disabled = true;
+  buildImage().then(function (c) {
+    var file = new File([c.blob], "cuotas-pm-automotores.png", { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      return navigator.share({ files: [file], title: "PM Automotores" });
+    }
+    showPreview(c);
+  }).catch(function (err) {
+    if (err && err.name === "AbortError") return;
+    return buildImage().then(showPreview).catch(function () { showMsg($("c-msg"), "No se pudo crear la imagen. Probá de nuevo."); });
+  }).then(function () { btn.disabled = !lastCalc; });
+});
+$("preview-close").addEventListener("click", function () { $("preview").hidden = true; });
+
+if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+  navigator.serviceWorker.register("sw.js").catch(function () {});
+}
+
+load();
+buildChips();
+refresh();
+calcCuota();
+calcTasa();
+</script>
+</body>
+</html>
