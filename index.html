@@ -83,15 +83,6 @@
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 420px) { .row2 { grid-template-columns: 1fr; } }
 
-  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .gear {
-    flex: none; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer;
-    color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 10px;
-  }
-  .gear[aria-expanded="true"] { color: var(--accent-fg); background: var(--accent); border-color: var(--accent); }
-  .settings { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px 18px; }
-  .settings .lbl { font-weight: 500; }
-
   .fold { display: flex; align-items: center; gap: 10px; width: 100%; padding: 0; background: none; border: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
   .fold .lbl { font-weight: 500; }
   .fold .sum { margin-left: auto; min-width: 0; text-align: right; color: var(--accent); font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; }
@@ -102,6 +93,21 @@
   .fold[aria-expanded="true"]::after { transform: rotate(-135deg); margin-bottom: -3px; }
   .fold[aria-expanded="true"] .sum { display: none; }
   .foldbody { display: flex; flex-direction: column; gap: 8px; }
+  .optfold { padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+  .optfold .lbl { font-weight: 600; }
+  .compra { display: flex; flex-direction: column; gap: 16px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+  .compra .inp, .compra .txt, .compra .optfold { background: var(--surface); }
+  .compra .sub2 { display: flex; flex-direction: column; gap: 16px; }
+  .txt { width: 100%; min-width: 0; box-sizing: border-box; font: inherit; font-size: 18px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 13px 14px; }
+  .txt:focus-visible { border-color: var(--accent); }
+  .inp input[readonly] { color: var(--muted); }
+  .saldo { background: var(--accent-soft); border-radius: 10px; padding: 14px 16px; }
+  .saldo .srow { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-variant-numeric: tabular-nums; }
+  .saldo .srow b { font-weight: 600; }
+  .saldo .big { font-family: var(--font-display); font-size: 44px; font-weight: 700; line-height: 1.1; color: var(--accent); font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .saldo .big.off { color: var(--muted); }
+  .saldo .none { margin: 0; color: var(--muted); }
+  .linkbtn { align-self: flex-start; font: inherit; font-weight: 600; color: var(--warn); background: none; border: 0; padding: 6px 0; cursor: pointer; }
   .chips { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
   .chips button {
     font: inherit; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums;
@@ -165,16 +171,7 @@
 <body>
 <main>
   <header>
-    <div class="head">
-      <h1>Calculadora de cuotas</h1>
-      <button type="button" class="gear" id="gear-btn" aria-label="Configuración" aria-expanded="false" aria-controls="settings">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </button>
-    </div>
-    <div class="settings" id="settings" hidden>
-      <label class="lbl" for="c-tasa">Interés mensual</label>
-      <div class="inp"><input id="c-tasa" class="nopre" type="text" inputmode="decimal" value="4" autocomplete="off" data-dec="3"><span class="suf">%</span></div>
-    </div>
+    <h1>Calculadora de cuotas</h1>
   </header>
 
   <section aria-label="Tipo de cálculo">
@@ -186,7 +183,51 @@
 
   <section class="card" id="panel-cuota">
     <div class="field">
-      <label for="c-capital">Capital</label>
+      <label for="c-tasa">Interés mensual</label>
+      <div class="inp"><input id="c-tasa" class="nopre" type="text" inputmode="decimal" value="4" autocomplete="off" data-dec="3"><span class="suf">%</span></div>
+    </div>
+    <button type="button" class="fold optfold" id="compra-btn" aria-expanded="false" aria-controls="compra"><span class="lbl">Compra de vehículo</span></button>
+    <div class="compra" id="compra" hidden>
+      <div class="field">
+        <label for="k-cliente">Cliente</label>
+        <input id="k-cliente" class="txt" type="text" autocomplete="off" autocapitalize="words">
+      </div>
+      <div class="field">
+        <label for="k-vehiculo">Vehículo que compra</label>
+        <input id="k-vehiculo" class="txt" type="text" autocomplete="off" autocapitalize="words" placeholder="Ej. Toro Freedom 2021">
+      </div>
+      <div class="field">
+        <label for="k-valor">Valor del vehículo</label>
+        <div class="inp"><span>$</span><input id="k-valor" type="text" inputmode="decimal" autocomplete="off" data-dec="2"></div>
+      </div>
+      <div class="field">
+        <label for="k-transf">Transferencia</label>
+        <div class="inp"><span>$</span><input id="k-transf" type="text" inputmode="decimal" autocomplete="off" data-dec="2"></div>
+      </div>
+      <button type="button" class="fold optfold" id="perm-btn" aria-expanded="false" aria-controls="permuta"><span class="lbl">Con permuta</span></button>
+      <div class="sub2" id="permuta" hidden>
+        <div class="field">
+          <label for="p-vehiculo">Vehículo que entrega</label>
+          <input id="p-vehiculo" class="txt" type="text" autocomplete="off" autocapitalize="words" placeholder="Ej. Toyota Etios">
+        </div>
+        <div class="field">
+          <label for="p-valor">Valor por el que se toma</label>
+          <div class="inp"><span>$</span><input id="p-valor" type="text" inputmode="decimal" autocomplete="off" data-dec="2"></div>
+        </div>
+        <div class="field">
+          <label for="p-gasto">Gasto del usado</label>
+          <div class="inp"><span>$</span><input id="p-gasto" type="text" inputmode="decimal" autocomplete="off" data-dec="2"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="k-entrega">Entrega (efectivo o transferencia)</label>
+        <div class="inp"><span>$</span><input id="k-entrega" type="text" inputmode="decimal" autocomplete="off" data-dec="2"></div>
+      </div>
+      <div class="saldo" id="compra-res" aria-live="polite"></div>
+      <button type="button" class="linkbtn" id="nueva-btn">Nueva operación</button>
+    </div>
+    <div class="field">
+      <label for="c-capital" id="cap-lbl">Capital</label>
       <div class="inp"><span>$</span><input id="c-capital" type="text" inputmode="decimal" value="100.000" autocomplete="off" data-dec="2"></div>
     </div>
     <div class="field">
@@ -283,6 +324,8 @@ function fmtLive(raw, maxDec) {
 var selected = { 3: 1, 6: 1, 12: 1 };
 var openRows = {};
 var mode = "cuota";
+var compraOpen = false, permutaOpen = false, manualCap = "100.000";
+var KIDS = ["k-cliente", "k-vehiculo", "k-valor", "k-transf", "k-entrega", "p-vehiculo", "p-valor", "p-gasto"];
 var money = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 var moneyInt = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0, maximumFractionDigits: 0 });
 function pct(x) { return x.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%"; }
@@ -308,11 +351,11 @@ function buildChips() {
 
 // ---- Memoria del teléfono: guarda el interés, el último cálculo y la pestaña, y los recupera al abrir la app.
 var STORE = "cuotas-pm-estado";
-var IDS = ["c-capital", "c-tasa", "t-capital", "t-cuotas", "t-valor"];
+var IDS = ["c-capital", "c-tasa", "t-capital", "t-cuotas", "t-valor"].concat(KIDS);
 function save() {
   try {
-    var o = { mode: mode, selected: Object.keys(selected).map(Number), v: {} };
-    IDS.forEach(function (id) { o.v[id] = $(id).value; });
+    var o = { mode: mode, compra: compraOpen, permuta: permutaOpen, selected: Object.keys(selected).map(Number), v: {} };
+    IDS.forEach(function (id) { o.v[id] = (id === "c-capital" && compraOpen) ? manualCap : $(id).value; });
     localStorage.setItem(STORE, JSON.stringify(o));
   } catch (err) {}
 }
@@ -320,6 +363,9 @@ function load() {
   try {
     var o = JSON.parse(localStorage.getItem(STORE) || "null"); if (!o) return;
     IDS.forEach(function (id) { if (typeof o.v[id] === "string") $(id).value = o.v[id]; });
+    manualCap = $("c-capital").value;
+    compraOpen = !!o.compra; permutaOpen = !!o.permuta;
+    applyCompraUI();
     if (Array.isArray(o.selected)) {
       selected = {};
       o.selected.forEach(function (n) { if (n >= 2 && n <= 24) selected[n] = 1; });
@@ -332,17 +378,18 @@ function load() {
 }
 
 function calcCuota() {
+  var d = updateCompra();
   save();
   var P = parseNum($("c-capital").value), i = parseNum($("c-tasa").value) / 100;
   var ns = Object.keys(selected).map(Number).sort(function (a, b) { return a - b; });
   var msg = $("c-msg"), res = $("c-res");
   res.innerHTML = "";
   lastCalc = null; setShare();
-  if (!(P > 0)) return showMsg(msg, "Ingresá el capital.");
-  if (!(i >= 0)) return showMsg(msg, "Ingresá el interés mensual en la configuración (la ruedita).");
+  if (!(P > 0)) return showMsg(msg, d ? (d.valor > 0 ? "No queda saldo para financiar: la permuta y la entrega cubren el total." : "Ingresá el valor del vehículo que compra.") : "Ingresá el capital.");
+  if (!(i >= 0)) return showMsg(msg, "Ingresá el interés mensual.");
   showMsg(msg, "");
   if (!ns.length) { res.innerHTML = '<p class="empty">Elegí una o más cantidades de cuotas.</p>'; return; }
-  lastCalc = { P: P, items: ns.map(function (n) { return { n: n, c: redondear(cuotaValor(P, i, n)) }; }) };
+  lastCalc = { P: P, items: ns.map(function (n) { return { n: n, c: redondear(cuotaValor(P, i, n)) }; }), compra: d };
   setShare();
   res.innerHTML = ns.map(function (n) {
     var exacta = cuotaValor(P, i, n), c = redondear(exacta), total = c * n, open = !!openRows[n], real = (total / P - 1) / n;
@@ -453,15 +500,60 @@ $("chips-btn").addEventListener("click", function () {
   updateSum();
 });
 
-// Configuración: la ruedita abre y cierra el menú con el interés mensual.
-function setSettings(open) {
-  $("settings").hidden = !open;
-  $("gear-btn").setAttribute("aria-expanded", String(open));
-  if (open) $("c-tasa").focus();
-  else if (document.activeElement === $("c-tasa")) $("c-tasa").blur();
+// ---- Compra de vehículo: calcula el saldo a financiar y lo usa como capital.
+function mv(id) { var v = parseNum($(id).value); return v > 0 ? v : 0; }
+function applyCompraUI() {
+  $("compra-btn").setAttribute("aria-expanded", String(compraOpen));
+  $("compra").hidden = !compraOpen;
+  $("perm-btn").setAttribute("aria-expanded", String(permutaOpen));
+  $("permuta").hidden = !permutaOpen;
+  $("c-capital").readOnly = compraOpen;
+  $("cap-lbl").textContent = compraOpen ? "Capital (saldo a financiar)" : "Capital";
 }
-$("gear-btn").addEventListener("click", function () { setSettings($("settings").hidden); });
-$("c-tasa").addEventListener("keydown", function (e) { if (e.key === "Escape" || e.key === "Enter") setSettings(false); });
+function compraData() {
+  var d = { cliente: $("k-cliente").value.trim(), vehiculo: $("k-vehiculo").value.trim(), valor: mv("k-valor"), transf: mv("k-transf"), entrega: mv("k-entrega"), pVeh: "", pValor: 0, gastoUsado: 0 };
+  if (permutaOpen) { d.pVeh = $("p-vehiculo").value.trim(); d.pValor = mv("p-valor"); d.gastoUsado = mv("p-gasto"); }
+  d.total = d.valor + d.transf + d.gastoUsado;
+  d.saldo = Math.round((d.total - d.pValor - d.entrega) * 100) / 100;
+  return d;
+}
+function srow(l, v) { return '<div class="srow"><span>' + l + "</span><b>" + v + "</b></div>"; }
+// Devuelve los datos de la compra si el bloque está abierto (y deja el saldo como capital), o null.
+function updateCompra() {
+  var cap = $("c-capital");
+  if (!compraOpen) { manualCap = cap.value; return null; }
+  var d = compraData();
+  cap.value = d.saldo > 0 ? fmtLive(String(d.saldo).replace(".", ","), 2) : "";
+  var h = "";
+  if (d.valor > 0) {
+    h += srow("Total", moneyInt.format(d.total));
+    if (d.pValor > 0) h += srow("Permuta", "− " + moneyInt.format(d.pValor));
+    if (d.entrega > 0) h += srow("Entrega", "− " + moneyInt.format(d.entrega));
+    h += '<p class="label-small" style="margin-top:8px">Saldo a financiar</p><div class="big' + (d.saldo > 0 ? "" : " off") + '">' + (d.saldo > 0 ? moneyInt.format(d.saldo) : "—") + "</div>";
+  } else {
+    h = '<p class="none">Cargá el valor del vehículo para ver el saldo a financiar.</p>';
+  }
+  $("compra-res").innerHTML = h;
+  return d;
+}
+$("compra-btn").addEventListener("click", function () {
+  if (!compraOpen) manualCap = $("c-capital").value;
+  compraOpen = !compraOpen;
+  if (!compraOpen) $("c-capital").value = manualCap;
+  applyCompraUI(); calcCuota();
+});
+$("perm-btn").addEventListener("click", function () { permutaOpen = !permutaOpen; applyCompraUI(); calcCuota(); });
+["k-valor", "k-transf", "k-entrega", "p-valor", "p-gasto"].forEach(function (id) { wireNumber(id, calcCuota); });
+["k-cliente", "k-vehiculo", "p-vehiculo"].forEach(function (id) { $(id).addEventListener("input", calcCuota); });
+// "Nueva operación" pide tocar dos veces para no borrar por error.
+var nuevaT = null;
+function nuevaReset() { nuevaT = null; $("nueva-btn").textContent = "Nueva operación"; }
+$("nueva-btn").addEventListener("click", function () {
+  if (nuevaT === null) { $("nueva-btn").textContent = "Tocá de nuevo para borrar los datos"; nuevaT = setTimeout(nuevaReset, 3000); return; }
+  clearTimeout(nuevaT); nuevaReset();
+  KIDS.forEach(function (id) { $(id).value = ""; });
+  permutaOpen = false; applyCompraUI(); calcCuota();
+});
 
 // ---- Compartir: arma una imagen para el cliente (sin el interés) y abre el menú de compartir (WhatsApp).
 var lastCalc = null;
@@ -482,10 +574,32 @@ function rrect(ctx, x, y, w, h, r) {
   ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }
 
+function fitText(ctx, text, maxW) {
+  if (ctx.measureText(text).width <= maxW) return text;
+  while (text.length > 1 && ctx.measureText(text + "…").width > maxW) text = text.slice(0, -1);
+  return text + "…";
+}
+
 function drawCard(data, hasLogo) {
-  var W = 1080, ROW = 118, TOP = 70, items = data.items;
+  var W = 1080, ROW = 118, DR = 88, TOP = 70, FOOT = 250, items = data.items, c = data.compra;
   var logoW = 780, logoH = hasLogo ? Math.round(logoImg.height * logoW / logoImg.width) : 0;
-  var yHead = TOP + logoH + 50, yRows = yHead + 330, H = yRows + items.length * ROW + 120;
+  var yHead = TOP + logoH + 50;
+  // Detalle de la compra (solo si se cargó): valor, transferencia, gasto del usado, total, permuta, entrega y saldo.
+  var det = [];
+  if (c) {
+    det.push({ l: "Valor", v: moneyInt.format(c.valor) });
+    if (c.transf > 0) det.push({ l: "Transferencia", v: moneyInt.format(c.transf) });
+    if (c.gastoUsado > 0) det.push({ l: "Gasto del usado", v: moneyInt.format(c.gastoUsado) });
+    det.push({ l: "Total", v: moneyInt.format(c.total), k: "total" });
+    if (c.pValor > 0) det.push({ l: "Permuta" + (c.pVeh ? ": " + c.pVeh : ""), v: "− " + moneyInt.format(c.pValor) });
+    if (c.entrega > 0) det.push({ l: "Entrega", v: "− " + moneyInt.format(c.entrega) });
+    det.push({ l: "Saldo a financiar", v: moneyInt.format(c.saldo), k: "saldo" });
+  }
+  var yy = yHead + 30, yCli = 0, yVeh = 0;
+  if (c) { if (c.cliente) { yy += 75; yCli = yy; } if (c.vehiculo) { yy += 85; yVeh = yy; } }
+  var yDet = yy + 45, yEnd = yDet + det.length * DR;
+  var yRows = c ? yEnd + 130 : yHead + 330;
+  var H = yRows + items.length * ROW + FOOT;
   var cv = document.createElement("canvas"); cv.width = W; cv.height = H;
   var ctx = cv.getContext("2d");
   var RED = "#d9291c", INK = "#141414", GREY = "#6b6b6b", LINE = "#e3e3e3";
@@ -496,22 +610,48 @@ function drawCard(data, hasLogo) {
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "center";
   ctx.fillStyle = GREY; ctx.font = "500 34px " + BODY;
   ctx.fillText(new Date().toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" }), W / 2, yHead + 30);
-  ctx.fillStyle = GREY; ctx.font = "600 30px " + BODY;
-  ctx.fillText("MONTO A FINANCIAR", W / 2, yHead + 130);
-  ctx.fillStyle = INK; ctx.font = "700 108px " + DISP;
-  ctx.fillText(moneyInt.format(data.P), W / 2, yHead + 245);
-  ctx.fillStyle = LINE; ctx.fillRect(80, yRows - 36, W - 160, 3);
+  if (!c) {
+    ctx.fillStyle = GREY; ctx.font = "600 30px " + BODY;
+    ctx.fillText("MONTO A FINANCIAR", W / 2, yHead + 130);
+    ctx.fillStyle = INK; ctx.font = "700 108px " + DISP;
+    ctx.fillText(moneyInt.format(data.P), W / 2, yHead + 245);
+    ctx.fillStyle = LINE; ctx.fillRect(80, yRows - 36, W - 160, 3);
+  } else {
+    if (yCli) { ctx.fillStyle = INK; ctx.font = "600 40px " + BODY; ctx.fillText(fitText(ctx, "Cliente: " + c.cliente, W - 160), W / 2, yCli); }
+    if (yVeh) { ctx.fillStyle = INK; ctx.font = "700 58px " + DISP; ctx.fillText(fitText(ctx, c.vehiculo, W - 160), W / 2, yVeh); }
+    det.forEach(function (r, k) {
+      var y = yDet + k * DR, base = y + 58, big = r.k === "saldo", tot = r.k === "total";
+      if (big) { ctx.fillStyle = "#fdeceb"; rrect(ctx, 60, y + 2, W - 120, DR - 4, 18); ctx.fill(); }
+      if (tot) { ctx.fillStyle = LINE; ctx.fillRect(100, y + 2, W - 200, 3); }
+      ctx.textAlign = "right"; ctx.fillStyle = big ? RED : INK;
+      ctx.font = (big || tot ? "700 " : "600 ") + (big ? 52 : 44) + "px " + DISP;
+      ctx.fillText(r.v, W - 100, base);
+      var vw = ctx.measureText(r.v).width;
+      ctx.textAlign = "left"; ctx.fillStyle = big ? RED : (tot ? INK : GREY);
+      ctx.font = (big || tot ? "700 " : "500 ") + "40px " + BODY;
+      ctx.fillText(fitText(ctx, r.l, W - 200 - vw - 30), 100, base);
+    });
+    ctx.fillStyle = LINE; ctx.fillRect(80, yEnd + 25, W - 160, 3);
+    ctx.textAlign = "center"; ctx.fillStyle = GREY; ctx.font = "600 30px " + BODY;
+    ctx.fillText("CUOTAS", W / 2, yEnd + 95);
+  }
   ctx.textAlign = "left";
   items.forEach(function (it, k) {
     var y = yRows + k * ROW;
     if (k % 2 === 0) { ctx.fillStyle = "#f6f6f6"; rrect(ctx, 60, y, W - 120, ROW - 14, 18); ctx.fill(); }
     ctx.fillStyle = INK; ctx.font = "700 54px " + DISP;
-    var ns = it.n + " cuotas de";
-    ctx.fillText(ns, 100, y + 70);
+    ctx.fillText(it.n + " cuotas de", 100, y + 70);
     ctx.textAlign = "right"; ctx.fillStyle = RED; ctx.font = "700 62px " + DISP;
     ctx.fillText(moneyInt.format(it.c), W - 100, y + 72);
     ctx.textAlign = "left";
   });
+  // Pie con las redes de la agencia.
+  var yF = H - FOOT + 30;
+  ctx.fillStyle = LINE; ctx.fillRect(80, yF, W - 160, 3);
+  ctx.fillStyle = INK; ctx.font = "500 32px " + BODY;
+  ctx.textAlign = "center";
+  ctx.fillText("Facebook: Pm Automotores", W / 2, yF + 70);
+  ctx.fillText("Instagram: Pm_automotoresch", W / 2, yF + 125);
   ctx.fillStyle = RED; ctx.fillRect(0, H - 16, W, 16);
   return cv;
 }
