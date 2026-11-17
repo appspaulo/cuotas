@@ -140,6 +140,10 @@
     color: var(--accent-fg); background: var(--accent); border: 0; border-radius: 12px;
   }
   .sharebtn:disabled { opacity: .35; cursor: default; }
+  .newbtn {
+    font: inherit; font-size: 18px; font-weight: 600; width: 100%; min-height: 54px; cursor: pointer;
+    color: var(--warn); background: transparent; border: 2px solid var(--warn); border-radius: 12px;
+  }
   .overlay {
     position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.72); overflow-y: auto;
     display: flex; flex-direction: column; align-items: center; gap: 14px;
@@ -153,6 +157,13 @@
     background: #fff; color: #1b2420;
   }
   .overlay .acts a.main { background: var(--accent); color: var(--accent-fg); }
+  .overlay.center { justify-content: center; }
+  .dlg { background: var(--surface); color: var(--fg); border-radius: 14px; padding: 22px 20px 18px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 14px; }
+  .dlg h3 { margin: 0; font-size: 18px; }
+  .dlg p { margin: 0; color: var(--muted); }
+  .dlg .acts { max-width: none; }
+  .dlg .acts button { background: var(--bg); color: var(--fg); border: 1px solid var(--line); }
+  .dlg .acts button.danger { background: var(--warn); color: var(--surface); border-color: var(--warn); }
 
   .answer { background: var(--accent-soft); border-radius: 10px; padding: 16px; }
   .answer .big { font-family: var(--font-display); font-size: 52px; font-weight: 700; line-height: 1.05; color: var(--accent); font-variant-numeric: tabular-nums; margin-top: 4px; }
@@ -224,7 +235,6 @@
         <div class="inp"><span>$</span><input id="k-entrega" type="text" inputmode="decimal" autocomplete="off" data-dec="2"></div>
       </div>
       <div class="saldo" id="compra-res" aria-live="polite"></div>
-      <button type="button" class="linkbtn" id="nueva-btn">Nueva operación</button>
     </div>
     <div class="field">
       <label for="c-capital" id="cap-lbl">Capital</label>
@@ -240,6 +250,7 @@
     <p class="msg" id="c-msg" role="alert" hidden></p>
     <div class="results" id="c-res" aria-live="polite"></div>
     <button type="button" class="sharebtn" id="share-btn" disabled>Compartir</button>
+    <button type="button" class="newbtn" id="nueva-btn" hidden>Nueva operación</button>
   </section>
 
   <section class="card" id="panel-tasa" hidden>
@@ -276,6 +287,17 @@
   <div class="acts">
     <a class="main" href="#" download="cuotas-pm-automotores.png">Descargar</a>
     <button type="button" id="preview-close">Cerrar</button>
+  </div>
+</div>
+
+<div class="overlay center" id="nueva-modal" hidden role="dialog" aria-modal="true" aria-labelledby="nueva-ttl">
+  <div class="dlg">
+    <h3 id="nueva-ttl">¿Nueva operación?</h3>
+    <p>Se van a borrar los datos del cliente, del vehículo y de la permuta.</p>
+    <div class="acts">
+      <button type="button" id="nueva-no">Cancelar</button>
+      <button type="button" class="danger" id="nueva-si">Sí, borrar</button>
+    </div>
   </div>
 </div>
 
@@ -505,6 +527,7 @@ function mv(id) { var v = parseNum($(id).value); return v > 0 ? v : 0; }
 function applyCompraUI() {
   $("compra-btn").setAttribute("aria-expanded", String(compraOpen));
   $("compra").hidden = !compraOpen;
+  $("nueva-btn").hidden = !compraOpen;
   $("perm-btn").setAttribute("aria-expanded", String(permutaOpen));
   $("permuta").hidden = !permutaOpen;
   $("c-capital").readOnly = compraOpen;
@@ -545,14 +568,18 @@ $("compra-btn").addEventListener("click", function () {
 $("perm-btn").addEventListener("click", function () { permutaOpen = !permutaOpen; applyCompraUI(); calcCuota(); });
 ["k-valor", "k-transf", "k-entrega", "p-valor", "p-gasto"].forEach(function (id) { wireNumber(id, calcCuota); });
 ["k-cliente", "k-vehiculo", "p-vehiculo"].forEach(function (id) { $(id).addEventListener("input", calcCuota); });
-// "Nueva operación" pide tocar dos veces para no borrar por error.
-var nuevaT = null;
-function nuevaReset() { nuevaT = null; $("nueva-btn").textContent = "Nueva operación"; }
-$("nueva-btn").addEventListener("click", function () {
-  if (nuevaT === null) { $("nueva-btn").textContent = "Tocá de nuevo para borrar los datos"; nuevaT = setTimeout(nuevaReset, 3000); return; }
-  clearTimeout(nuevaT); nuevaReset();
+// "Nueva operación": pide confirmación en un cuadro para no borrar por error.
+function nuevaCerrar() { $("nueva-modal").hidden = true; }
+$("nueva-btn").addEventListener("click", function () { $("nueva-modal").hidden = false; });
+$("nueva-no").addEventListener("click", nuevaCerrar);
+$("nueva-modal").addEventListener("click", function (e) { if (e.target === this) nuevaCerrar(); });
+$("nueva-si").addEventListener("click", function () {
+  nuevaCerrar();
   KIDS.forEach(function (id) { $(id).value = ""; });
-  permutaOpen = false; applyCompraUI(); calcCuota();
+  // Vuelve a dejar plegados los datos del auto a comprar y la permuta.
+  compraOpen = false; permutaOpen = false;
+  $("c-capital").value = manualCap;
+  applyCompraUI(); calcCuota();
 });
 
 // ---- Compartir: arma una imagen para el cliente (sin el interés) y abre el menú de compartir (WhatsApp).
