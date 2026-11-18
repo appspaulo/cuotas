@@ -250,7 +250,7 @@
     <p class="msg" id="c-msg" role="alert" hidden></p>
     <div class="results" id="c-res" aria-live="polite"></div>
     <button type="button" class="sharebtn" id="share-btn" disabled>Compartir</button>
-    <button type="button" class="newbtn" id="nueva-btn" hidden>Nueva operación</button>
+    <button type="button" class="newbtn" id="nueva-btn">Nueva operación</button>
   </section>
 
   <section class="card" id="panel-tasa" hidden>
@@ -527,7 +527,6 @@ function mv(id) { var v = parseNum($(id).value); return v > 0 ? v : 0; }
 function applyCompraUI() {
   $("compra-btn").setAttribute("aria-expanded", String(compraOpen));
   $("compra").hidden = !compraOpen;
-  $("nueva-btn").hidden = !compraOpen;
   $("perm-btn").setAttribute("aria-expanded", String(permutaOpen));
   $("permuta").hidden = !permutaOpen;
   $("c-capital").readOnly = compraOpen;
@@ -575,11 +574,15 @@ $("nueva-no").addEventListener("click", nuevaCerrar);
 $("nueva-modal").addEventListener("click", function (e) { if (e.target === this) nuevaCerrar(); });
 $("nueva-si").addEventListener("click", function () {
   nuevaCerrar();
+  // Borra todo lo cargado, pero conserva el interés mensual (c-tasa).
   KIDS.forEach(function (id) { $(id).value = ""; });
+  ["t-capital", "t-cuotas", "t-valor"].forEach(function (id) { $(id).value = ""; });
+  selected = {}; openRows = {};
+  Array.prototype.forEach.call($("chips").children, function (b) { if (!b.disabled) b.setAttribute("aria-pressed", "false"); });
   // Vuelve a dejar plegados los datos del auto a comprar y la permuta.
   compraOpen = false; permutaOpen = false;
-  $("c-capital").value = manualCap;
-  applyCompraUI(); calcCuota();
+  manualCap = ""; $("c-capital").value = "";
+  applyCompraUI(); calcCuota(); calcTasa(); updateSum();
 });
 
 // ---- Compartir: arma una imagen para el cliente (sin el interés) y abre el menú de compartir (WhatsApp).
