@@ -185,13 +185,6 @@
     <h1>Calculadora de cuotas</h1>
   </header>
 
-  <section aria-label="Tipo de cálculo">
-    <div class="seg" id="modo">
-      <button type="button" data-t="cuota" aria-pressed="true">Valor de la cuota</button>
-      <button type="button" data-t="tasa" aria-pressed="false">Interés mensual</button>
-    </div>
-  </section>
-
   <section class="card" id="panel-cuota">
     <div class="field">
       <label for="c-tasa">Interés mensual</label>
@@ -253,32 +246,6 @@
     <button type="button" class="newbtn" id="nueva-btn">Nueva operación</button>
   </section>
 
-  <section class="card" id="panel-tasa" hidden>
-    <div class="field">
-      <label for="t-capital">Capital</label>
-      <div class="inp"><span>$</span><input id="t-capital" type="text" inputmode="decimal" value="100.000" autocomplete="off" data-dec="2"></div>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label for="t-cuotas">Cantidad de cuotas</label>
-        <div class="inp"><input id="t-cuotas" class="nopre" type="text" inputmode="numeric" value="6" autocomplete="off" data-dec="0"></div>
-      </div>
-      <div class="field">
-        <label for="t-valor">Monto de cada cuota</label>
-        <div class="inp"><span>$</span><input id="t-valor" type="text" inputmode="decimal" value="20.666,67" autocomplete="off" data-dec="2"></div>
-      </div>
-    </div>
-    <p class="msg" id="t-msg" role="alert" hidden></p>
-    <div class="answer" aria-live="polite">
-      <p class="label-small">Interés mensual</p>
-      <div class="big" id="t-big">—</div>
-    </div>
-    <dl id="t-det" hidden>
-      <div><dt>Total a cobrar</dt><dd id="t-total"></dd></div>
-      <div><dt>Interés total</dt><dd id="t-int"></dd></div>
-      <div><dt>Interés total sobre el capital</dt><dd id="t-intpct"></dd></div>
-    </dl>
-  </section>
 </main>
 
 <div class="overlay" id="preview" hidden role="dialog" aria-label="Imagen para compartir">
@@ -328,7 +295,6 @@ function paso(c) {
 // La cuota que se cobra: se redondea hacia arriba según ese paso.
 function redondear(c) { var s = paso(c); return Math.ceil(c / s - 1e-9) * s; }
 // Interés mensual (fracción, 0.04 = 4%) a partir de capital, cuotas y monto de cuota.
-function tasaDesdeCuota(P, c, n) { return (c * n / P - 1) / n; }
 // Formatea mientras se escribe: puntos de miles, coma decimal.
 function fmtLive(raw, maxDec) {
   var s = String(raw).replace(/[^\d,]/g, "");
@@ -345,7 +311,6 @@ function fmtLive(raw, maxDec) {
 
 var selected = { 3: 1, 6: 1, 12: 1 };
 var openRows = {};
-var mode = "cuota";
 var compraOpen = false, permutaOpen = false, manualCap = "100.000";
 var KIDS = ["k-cliente", "k-vehiculo", "k-valor", "k-transf", "k-entrega", "p-vehiculo", "p-valor", "p-gasto"];
 var money = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -373,10 +338,10 @@ function buildChips() {
 
 // ---- Memoria del teléfono: guarda el interés, el último cálculo y la pestaña, y los recupera al abrir la app.
 var STORE = "cuotas-pm-estado";
-var IDS = ["c-capital", "c-tasa", "t-capital", "t-cuotas", "t-valor"].concat(KIDS);
+var IDS = ["c-capital", "c-tasa"].concat(KIDS);
 function save() {
   try {
-    var o = { mode: mode, compra: compraOpen, permuta: permutaOpen, selected: Object.keys(selected).map(Number), v: {} };
+    var o = { compra: compraOpen, permuta: permutaOpen, selected: Object.keys(selected).map(Number), v: {} };
     IDS.forEach(function (id) { o.v[id] = (id === "c-capital" && compraOpen) ? manualCap : $(id).value; });
     localStorage.setItem(STORE, JSON.stringify(o));
   } catch (err) {}
@@ -391,10 +356,6 @@ function load() {
     if (Array.isArray(o.selected)) {
       selected = {};
       o.selected.forEach(function (n) { if (n >= 2 && n <= 24) selected[n] = 1; });
-    }
-    if (o.mode === "cuota" || o.mode === "tasa") {
-      mode = o.mode;
-      Array.prototype.forEach.call($("modo").children, function (x) { x.setAttribute("aria-pressed", String(x.getAttribute("data-t") === mode)); });
     }
   } catch (err) {}
 }
@@ -438,39 +399,6 @@ $("c-res").addEventListener("click", function (e) {
   if (open) openRows[n] = 1; else delete openRows[n];
 });
 
-function calcTasa() {
-  save();
-  var P = parseNum($("t-capital").value), n = parseInt(String($("t-cuotas").value).replace(/\./g, ""), 10), c = parseNum($("t-valor").value);
-  var msg = $("t-msg"), big = $("t-big"), det = $("t-det");
-  det.hidden = true; big.className = "big off"; big.textContent = "—";
-  if (!(P > 0)) return showMsg(msg, "Ingresá el capital.");
-  if (!(n >= 1)) return showMsg(msg, "Ingresá la cantidad de cuotas.");
-  if (!(c > 0)) return showMsg(msg, "Ingresá el monto de cada cuota.");
-  var i = tasaDesdeCuota(P, c, n);
-  if (i < 0) return showMsg(msg, "Con esos valores el total de las cuotas es menor que el capital, así que no hay interés.");
-  showMsg(msg, "");
-  var total = c * n;
-  big.className = "big";
-  big.innerHTML = pct(i * 100).replace("%", "") + " <small>% por mes</small>";
-  $("t-total").textContent = money.format(total);
-  $("t-int").textContent = money.format(total - P);
-  $("t-intpct").textContent = pct((total / P - 1) * 100);
-  det.hidden = false;
-}
-
-function refresh() {
-  $("panel-cuota").hidden = mode !== "cuota";
-  $("panel-tasa").hidden = mode !== "tasa";
-}
-
-$("modo").addEventListener("click", function (e) {
-  var b = e.target.closest("button"); if (!b) return;
-  mode = b.getAttribute("data-t");
-  Array.prototype.forEach.call($("modo").children, function (x) { x.setAttribute("aria-pressed", String(x === b)); });
-  refresh();
-  save();
-});
-
 // Separador de miles en vivo, conservando la posición del cursor.
 function wireNumber(id, onChange) {
   var el = $(id), dec = parseInt(el.getAttribute("data-dec"), 10);
@@ -494,9 +422,6 @@ function wireNumber(id, onChange) {
 }
 wireNumber("c-capital", calcCuota);
 wireNumber("c-tasa", calcCuota);
-wireNumber("t-capital", calcTasa);
-wireNumber("t-cuotas", calcTasa);
-wireNumber("t-valor", calcTasa);
 
 // Al entrar a un campo se selecciona todo, para reemplazar el monto escribiendo directo.
 Array.prototype.forEach.call(document.querySelectorAll("input[data-dec]"), function (el) {
@@ -576,13 +501,12 @@ $("nueva-si").addEventListener("click", function () {
   nuevaCerrar();
   // Borra todo lo cargado, pero conserva el interés mensual (c-tasa).
   KIDS.forEach(function (id) { $(id).value = ""; });
-  ["t-capital", "t-cuotas", "t-valor"].forEach(function (id) { $(id).value = ""; });
   selected = {}; openRows = {};
   Array.prototype.forEach.call($("chips").children, function (b) { if (!b.disabled) b.setAttribute("aria-pressed", "false"); });
   // Vuelve a dejar plegados los datos del auto a comprar y la permuta.
   compraOpen = false; permutaOpen = false;
   manualCap = ""; $("c-capital").value = "";
-  applyCompraUI(); calcCuota(); calcTasa(); updateSum();
+  applyCompraUI(); calcCuota(); updateSum();
 });
 
 // ---- Compartir: arma una imagen para el cliente (sin el interés) y abre el menú de compartir (WhatsApp).
@@ -737,9 +661,7 @@ if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
 
 load();
 buildChips();
-refresh();
 calcCuota();
-calcTasa();
 </script>
 </body>
 </html>
