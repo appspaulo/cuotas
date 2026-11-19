@@ -234,6 +234,10 @@
       <div class="inp"><span>$</span><input id="c-capital" type="text" inputmode="decimal" value="100.000" autocomplete="off" data-dec="2"></div>
     </div>
     <div class="field">
+      <label for="k-extra">Monto extra (solo para el cálculo de cuotas)</label>
+      <div class="inp"><span>$</span><input id="k-extra" type="text" inputmode="decimal" autocomplete="off" data-dec="2"></div>
+    </div>
+    <div class="field">
       <button type="button" class="fold" id="chips-btn" aria-expanded="true" aria-controls="chips-body"><span class="lbl" id="chips-lbl">Cantidad de cuotas</span><span class="sum" id="chips-sum"></span></button>
       <div class="foldbody" id="chips-body">
         <span class="hint">Tocá las que quieras comparar</span>
@@ -312,7 +316,7 @@ function fmtLive(raw, maxDec) {
 var selected = { 3: 1, 6: 1, 12: 1 };
 var openRows = {};
 var compraOpen = false, permutaOpen = false, manualCap = "100.000";
-var KIDS = ["k-cliente", "k-vehiculo", "k-valor", "k-transf", "k-entrega", "p-vehiculo", "p-valor", "p-gasto"];
+var KIDS = ["k-cliente", "k-vehiculo", "k-valor", "k-transf", "k-entrega", "k-extra", "p-vehiculo", "p-valor", "p-gasto"];
 var money = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 var moneyInt = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 0, maximumFractionDigits: 0 });
 function pct(x) { return x.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "%"; }
@@ -363,16 +367,18 @@ function load() {
 function calcCuota() {
   var d = updateCompra();
   save();
-  var P = parseNum($("c-capital").value), i = parseNum($("c-tasa").value) / 100;
+  var P0 = parseNum($("c-capital").value), i = parseNum($("c-tasa").value) / 100;
+  // El monto extra se suma solo para calcular las cuotas; no figura en el resumen ni en la imagen.
+  var P = P0 + mv("k-extra");
   var ns = Object.keys(selected).map(Number).sort(function (a, b) { return a - b; });
   var msg = $("c-msg"), res = $("c-res");
   res.innerHTML = "";
   lastCalc = null; setShare();
-  if (!(P > 0)) return showMsg(msg, d ? (d.valor > 0 ? "No queda saldo para financiar: la permuta y la entrega cubren el total." : "Ingresá el valor del vehículo que compra.") : "Ingresá el capital.");
+  if (!(P0 > 0)) return showMsg(msg, d ? (d.valor > 0 ? "No queda saldo para financiar: la permuta y la entrega cubren el total." : "Ingresá el valor del vehículo que compra.") : "Ingresá el capital.");
   if (!(i >= 0)) return showMsg(msg, "Ingresá el interés mensual.");
   showMsg(msg, "");
   if (!ns.length) { res.innerHTML = '<p class="empty">Elegí una o más cantidades de cuotas.</p>'; return; }
-  lastCalc = { P: P, items: ns.map(function (n) { return { n: n, c: redondear(cuotaValor(P, i, n)) }; }), compra: d };
+  lastCalc = { P: P0, items: ns.map(function (n) { return { n: n, c: redondear(cuotaValor(P, i, n)) }; }), compra: d };
   setShare();
   res.innerHTML = ns.map(function (n) {
     var exacta = cuotaValor(P, i, n), c = redondear(exacta), total = c * n, open = !!openRows[n], real = (total / P - 1) / n;
@@ -490,7 +496,7 @@ $("compra-btn").addEventListener("click", function () {
   applyCompraUI(); calcCuota();
 });
 $("perm-btn").addEventListener("click", function () { permutaOpen = !permutaOpen; applyCompraUI(); calcCuota(); });
-["k-valor", "k-transf", "k-entrega", "p-valor", "p-gasto"].forEach(function (id) { wireNumber(id, calcCuota); });
+["k-valor", "k-transf", "k-entrega", "k-extra", "p-valor", "p-gasto"].forEach(function (id) { wireNumber(id, calcCuota); });
 ["k-cliente", "k-vehiculo", "p-vehiculo"].forEach(function (id) { $(id).addEventListener("input", calcCuota); });
 // "Nueva operación": pide confirmación en un cuadro para no borrar por error.
 function nuevaCerrar() { $("nueva-modal").hidden = true; }
